@@ -3,6 +3,10 @@ using JuMP
 using Distributions
 
 function NVG(graph, A, B, s)
+    #creates NVG, which is put into graph input
+    #s is an array representing the intensities for each input value
+    #returns nothing
+    #changes graph variable 
     for i =(A+1):(B-1)
         if s[i] < s[B] + (s[A]-s[B])*(B-i)/(B-A)
             # join A and B
@@ -20,32 +24,21 @@ function NVG(graph, A, B, s)
     end
 end
 
-   
-#x = [1,2,3,4,5]
-#s = [4,8,12,16,20]
-#graph = zeros(5,5)
-#graphPrime = zeros(5,5)
-#sprime = -s
-#WDPVG = zeros(5,5)
-#for A=1:5
-    #for B=A:5
-        #NVG(graph, A, B, s)
-        #NVG(graphPrime, A, B, sprime)
-        #WDPVG[A,B] = maximum([graph[A,B], graphPrime[A,B]])
-    #end
-#end
-
-numPoints = 150
-x = rand(Uniform(0,1),1,numPoints)
-s = sin.(x)
-g = zeros(numPoints, numPoints)
-gprime = zeros(numPoints, numPoints)
-WDPVG = zeros(numPoints, numPoints)
-sprime = -s
-for A=1:numPoints
-    for B=1:numPoints
-        NVG(g, A, B, s)
-        NVG(gprime, A, B, sprime)
-        WDPVG[A,B] = maximum([g[A,B],gprime[A,B]])
+function build_WDPVG(s, numPoints)
+    #returns WDPVG
+    #s is an array representing the intensities for each input value
+    graph = zeros(numPoints, numPoints)
+    graph_prime = zeros(numPoints, numPoints)
+    s_prime = -s
+    WDPVG = zeros(numPoints, numPoints)
+    for A=1:numPoints
+        for B=1:numPoints
+            NVG(graph, A, B, s)
+            NVG(graph_prime, A, B, s_prime)
+            WDPVG[A,B] = maximum([graph[A,B],graph_prime[A,B]])
+        end
     end
+    return WDPVG
 end
+
+
