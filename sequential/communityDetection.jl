@@ -63,32 +63,49 @@ end
  
 
 function hubConstruction(g, path)
-    ret = []
+    # puts each node not in path into group of closest node in path
+    # returns list of sets
+    groups = Set{Int64}[]
+    for y in path
+       push!(groups, Set(y)) 
+    end
     for x in g.verts
         if !(x in path)
             shortestLen = typemax(Float32)
-            group = [x,x]
-            for y in path
-                p, c = dijkstrapath(g, x, y)
+            #not always returing correct group because of directed graph. 
+            #think we need to make graph undirected
+            group = 1
+            for y in eachindex(path)
+                p, c = dijkstrapath(g, x, path[y])
                 if c < shortestLen
                     shortestLen = c
-                    group[2] = y
+                    group = y
                 end
             end
-        push!(ret, group)
+        push!(groups[group], x)
         end
+    end
+    return groups
+end
+
+
+function hubMerging(g, path, groups, e)
+    ret = copy(groups)
+    
+    p_copy = copy(path)
+    
+    while size(p_copy)[1] > 1
+        x = p_copy[1]
+        for y in 2:(size(p_copy)[1])
+            p, c = dijkstrapath(g, x, p_copy[y])
+            if c < e
+                ret[1] = union!(ret[1],ret[y])
+                deleteat!(ret, y)
+                deleteat!(p_copy, y)
+            end
+        end
+        deleteat!(p_copy, 1)
+        
     end
     return ret
 end
-
-# testgraph = [("a", "b", 1), ("b", "e", 2), ("a", "e", 4)]
-testgraph = [("a", "b", 7),  ("a", "c", 9),  ("a", "f", 14), ("b", "c", 10),
-             ("b", "d", 15), ("c", "d", 11), ("c", "f", 2),  ("d", "e", 6),
-             ("e", "f", 9)]
-#g = Digraph(testgraph)
-#src, dst = "a", "e"
-#path, cost = dijkstrapath(g, src, dst)
-#println("Shortest path from $src to $dst: ", isempty(path) ? "no possible path" : join(path, " → "), " (cost $cost)")
-
-#groups =  hubConstruction(g, path)
-#println(groups)

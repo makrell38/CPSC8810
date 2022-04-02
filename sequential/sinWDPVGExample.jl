@@ -23,3 +23,8 @@ destination = numPoints
 
 path, cost = dijkstrapath(graph, source, destination)
 println("Shortest path from $source to $destination: ", isempty(path) ? "no possible path" : join(path, " → "), " (cost $cost)")
+groups = hubConstruction(graph, path)
+println("groups before merge: ", groups)
+
+mergedGroups = hubMerging(graph, path, groups, 10)
+println("groups after merge: ", mergedGroups)
