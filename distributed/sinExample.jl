@@ -3,8 +3,7 @@ using JuMP
 using Distributions
 
 include("WDPVG.jl")
-include("communityDetection.jl")
-
+include("parallelCD.jl")
 
 #set number of points
 numPoints = 300
@@ -12,12 +11,11 @@ numPoints = 300
 x = rand(Uniform(0,1),1,numPoints)
 #s holds output of each x value put into the sin function
 s = sin.(x)
-
-@time begin
 #call WDPVG which returns the WDPVG list of tuples of edges
+@time begin
 WDPVG = build_WDPVG(s, numPoints)
 end
-    
+
 #println(WDPVG)
 #create graph using method from communityDetection.jl
 graph = Digraph(WDPVG)
@@ -39,3 +37,19 @@ end
 hubMerging(graph, path, groups, 10)
 end
 #println("groups after merge: ", groups)
+
+#=
+#create groups
+#returns dictionary of type Dict(Int64, Set{Int64})
+@time begin
+groups = createGroups(s,path, graph)
+end
+#println("groups before merge: ", groups)
+
+#merges groups closer
+#changes groups
+@time begin
+hubMerging(graph, path, groups, 10)
+end
+#println("groups after merge: ", groups)
+=#

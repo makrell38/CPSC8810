@@ -3,7 +3,7 @@ using JuMP
 using Distributions
 
 
-include("communityDetection.jl")
+include("parallelCD.jl")
 
 function NVG(A, B, s)
     #creates graph edge

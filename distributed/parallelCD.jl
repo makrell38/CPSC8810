@@ -1,37 +1,41 @@
 import Pkg
 using JuMP
 using Distributions
+using Distributed 
+using SharedArrays
+
+addprocs(6)
 
 # Code adapted from https://rosettacode.org/wiki/Dijkstra%27s_algorithm
-struct Digraph{T <: Real,U}
+@everywhere struct Digraph{T <: Real,U}
     edges::Dict{Tuple{U,U},T}
     verts::Set{U}
 end
  
-function Digraph(edges::Vector{Tuple{U,U,T}}) where {T <: Real,U}
+@everywhere function Digraph(edges::Vector{Tuple{U,U,T}}) where {T <: Real,U}
     vnames = Set{U}(v for edge in edges for v in edge[1:2])
     adjmat = Dict((edge[1], edge[2]) => edge[3] for edge in edges)
     return Digraph(adjmat, vnames)
 end
  
-vertices(g::Digraph) = g.verts
-edges(g::Digraph)    = g.edges
+#vertices(g::Digraph) = g.verts
+#edges(g::Digraph)    = g.edges
  
-neighbours(g::Digraph, v) = Set((b, c) for ((a, b), c) in edges(g) if a == v)
+@everywhere neighbours(g::Digraph, v) = Set((b, c) for ((a, b), c) in g.edges if a == v)
  
-function dijkstrapath(g::Digraph{T,U}, source::U, dest::U) where {T, U}
-    @assert source ∈ vertices(g) "$source is not a vertex in the graph"
+@everywhere function dijkstrapath(g::Digraph{T,U}, source::U, dest::U) where {T, U}
+    @assert source ∈ g.verts "$source is not a vertex in the graph"
     
     
     # Easy case
     if source == dest return [source], 0 end
     # Initialize variables
     inf  = typemax(T)
-    dist = Dict(v => inf for v in vertices(g))
-    prev = Dict(v => v   for v in vertices(g))
+    dist = Dict(v => inf for v in g.verts)
+    prev = Dict(v => v   for v in g.verts)
     dist[source] = 0
-    Q = copy(vertices(g))
-    neigh = Dict(v => neighbours(g, v) for v in vertices(g))
+    Q = copy(g.verts)
+    neigh = Dict(v => neighbours(g, v) for v in g.verts)
  
     # Main loop
     while !isempty(Q)
@@ -65,34 +69,34 @@ end
 function hubConstruction(g, path)
     # puts each node not in path into group of closest node in path
     # returns list of sets
-    groups = Set{Int64}[]
+    groups = SharedVector{Int64}(length(g.verts))
     dict = Dict{Int64, Set{Int64}}()
-    for y in path
-       push!(groups, Set(y)) 
-    end
-    for x in g.verts
+    @sync @distributed for x in 1:length(g.verts)
         group = x
         if !(x in path)
             shortestLen = typemax(Float32)
-            #not always returing correct group because of directed graph. 
-            #think we need to make graph undirected
             for y in eachindex(path)
-                p, c = dijkstrapath(g, x, path[y])
+                p,c = dijkstrapath(g, x, path[y])
                 if c < shortestLen
-                    shortestLen = c
+                    shortestLen=c
                     group = path[y]
                 end
             end
-        #push!(groups[group], x)
         end
-        if haskey(dict, group)
-            push!(dict[group], x)
+        groups[x] = group
+    end
+    
+    for x in eachindex(groups)
+        if haskey(dict, groups[x])
+            push!(dict[groups[x]], x)
         else
-            dict[group] = Set(x)
+            dict[groups[x]] = Set(x)
         end
     end
+    
     return dict
 end
+
 
 function hubMerging(g, path, groups, e)
     k = sort!(collect(keys(groups)))
@@ -107,25 +111,3 @@ function hubMerging(g, path, groups, e)
     end
 end
 
-#=
-function hubMerging(g, path, groups, e)
-    ret = copy(groups)
-    
-    p_copy = copy(path)
-    
-    while size(p_copy)[1] > 1
-        x = p_copy[1]
-        for y in 2:(size(p_copy)[1])
-            p, c = dijkstrapath(g, x, p_copy[y])
-            if c < e
-                ret[1] = union!(ret[1],ret[y])
-                deleteat!(ret, y)
-                deleteat!(p_copy, y)
-            end
-        end
-        deleteat!(p_copy, 1)
-        
-    end
-    return ret
-end
-=#
