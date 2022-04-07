@@ -2,43 +2,42 @@ import Pkg
 using JuMP
 using Distributions
 
-function NVG(graph, A, B, s)
-    #creates NVG, which is put into graph input
+include("communityDetection.jl")
+
+function NVG(A, B, s)
+    #creates graph edge
     #s is an array representing the intensities for each input value
-    #returns nothing
-    #changes graph variable 
+    #returns weight of graph edge
     for i =(A+1):(B-1)
         if s[i] < s[B] + (s[A]-s[B])*(B-i)/(B-A)
             # join A and B
             # euclidean distance
-            graph[A,B] = sqrt((s[A]-s[B])^2 + (A-B)^2)
-            graph[B,A] = sqrt((s[A]-s[B])^2 + (A-B)^2)
+            edge = sqrt((s[A]-s[B])^2 + (A-B)^2)
             # tangent of the view angle
-            #graph[A,B] = abs((s[A]-s[B])/(A-B)) + 10^(-8)
-            #graph[B,A] = abs((s[A]-s[B])/(A-B)) + 10^(-8)
+            #edge= abs((s[A]-s[B])/(A-B)) + 10^(-8)
             # time difference
-            #graph[A,B] = abs(A-B)
-            #graph[B,A] = abs(A-B)
-            return
+            #edge = abs(A-B)
+            return edge
         end
     end
+    return 0
 end
 
 function build_WDPVG(s, numPoints)
     #returns WDPVG
     #s is an array representing the intensities for each input value
-    graph = zeros(numPoints, numPoints)
-    graph_prime = zeros(numPoints, numPoints)
+    #returns list of tuples of each edge
     s_prime = -s
-    WDPVG = zeros(numPoints, numPoints)
+    WDPVG = Tuple{Int64, Int64, Float64}[]
     for A=1:numPoints
         for B=1:numPoints
-            NVG(graph, A, B, s)
-            NVG(graph_prime, A, B, s_prime)
-            WDPVG[A,B] = maximum([graph[A,B],graph_prime[A,B]])
+            graph = convert(Float64, NVG(A, B, s))
+            graph_prime = convert(Float64, NVG(A, B, s_prime))
+            x = maximum([graph,graph_prime])
+            if x != 0
+                push!(WDPVG,(A,B,x))
+            end
         end
     end
     return WDPVG
 end
-
-
