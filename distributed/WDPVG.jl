@@ -1,15 +1,16 @@
 import Pkg
 using JuMP
 using Distributions
-
+using Distributed
+addprocs(6)
 
 include("parallelCD.jl")
 
-function NVG(A, B, s)
+@everywhere function NVG(A, B, s)
     #creates graph edge
     #s is an array representing the intensities for each input value
     #returns weight of graph edge
-    for i =(A+1):(B-1)
+     for i =(A+1):(B-1)
         if s[i] < s[B] + (s[A]-s[B])*(B-i)/(B-A)
             # join A and B
             # euclidean distance
@@ -30,16 +31,15 @@ function build_WDPVG(s, numPoints)
     #returns list of tuples of each edge
     s_prime = -s
     WDPVG = Tuple{Int64, Int64, Float64}[]
-    for A=1:numPoints
-        for B=1:numPoints
-            graph = convert(Float64, NVG(A, B, s))
-            graph_prime = convert(Float64, NVG(A, B, s_prime))
-            x = maximum([graph,graph_prime])
-            if x != 0
-                push!(WDPVG,(A,B,x))
-            end
-        end
-    end
-    return WDPVG
+    @sync @distributed for A=1:numPoints
+               for B=1:numPoints
+                      graph = convert(Float64, NVG(A, B, s))
+                      graph_prime = convert(Float64, NVG(A, B, s_prime))
+                      x = maximum([graph,graph_prime])
+                      if x != 0
+                      push!(WDPVG,(A,B,x))
+                     end
+                    end
+                  end
+ return WDPVG
 end
-
