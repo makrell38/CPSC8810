@@ -1,7 +1,7 @@
 import Pkg
 using JuMP
 using Distributions
-
+using Base.Threads
 
 include("commDet.jl")
 
@@ -30,16 +30,18 @@ function build_WDPVG(s, numPoints)
     #returns list of tuples of each edge
     s_prime = -s
     WDPVG = Tuple{Int64, Int64, Float64}[]
-    for A=1:numPoints
-        for B=1:numPoints
-            graph = convert(Float64, NVG(A, B, s))
-            graph_prime = convert(Float64, NVG(A, B, s_prime))
-            x = maximum([graph,graph_prime])
-            if x != 0
-                push!(WDPVG,(A,B,x))
-            end
-        end
-    end
-    return WDPVG
+       @sync for A=1:numPoints
+           for B=1:numPoints
+                   Threads.@spawn begin
+                      graph = convert(Float64, NVG(A, B, s))
+                      graph_prime = convert(Float64, NVG(A, B, s_prime))
+                      x = maximum([graph,graph_prime])
+                      if x != 0
+                      push!(WDPVG,(A,B,x))
+                     end
+                    end
+                  end
+               end
+ return WDPVG
 end
 
