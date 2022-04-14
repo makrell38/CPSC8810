@@ -66,7 +66,7 @@ end
 end
  
 
-function hubConstruction(g, path)
+function hubConst(g, path, direction)
     # puts each node not in path into group of closest node in path
     # returns list of sets
     groups = SharedVector{Int64}(length(g.verts))
@@ -76,6 +76,11 @@ function hubConstruction(g, path)
         if !(x in path)
             shortestLen = typemax(Float32)
             for y in eachindex(path)
+                if direction == "left" && path[y] > x
+                    continue
+                elseif direction == "right" && path[y] < x
+                    continue
+                end
                 p,c = dijkstrapath(g, x, path[y])
                 if c < shortestLen
                     shortestLen=c
@@ -98,7 +103,7 @@ function hubConstruction(g, path)
 end
 
 
-function hubMerging(g, path, groups, e)
+function hubMerge(g, path, groups, e)
     k = sort!(collect(keys(groups)))
     for i in 1:length(k)
        for j in i+1:length(k)

@@ -2,6 +2,7 @@ import Pkg
 using JuMP
 using Distributions
 using Distributed
+using SharedArrays
 addprocs(6)
 
 include("parallelCD.jl")
@@ -30,16 +31,23 @@ function build_WDPVG(s, numPoints)
     #s is an array representing the intensities for each input value
     #returns list of tuples of each edge
     s_prime = -s
+    edges = SharedArray{Float64}((numPoints,numPoints))
     WDPVG = Tuple{Int64, Int64, Float64}[]
     @sync @distributed for A=1:numPoints
-               for B=1:numPoints
-                      graph = convert(Float64, NVG(A, B, s))
-                      graph_prime = convert(Float64, NVG(A, B, s_prime))
-                      x = maximum([graph,graph_prime])
-                      if x != 0
-                      push!(WDPVG,(A,B,x))
-                     end
-                    end
-                  end
- return WDPVG
+        for B=1:numPoints
+            graph = convert(Float64, NVG(A, B, s))
+            graph_prime = convert(Float64, NVG(A, B, s_prime))
+            x = maximum([graph,graph_prime])
+            edges[A,B] = x
+        end
+    end
+    for A=1:numPoints
+        for B=1:numPoints
+            x = edges[A,B]
+            if x != 0
+                push!(WDPVG, (A,B,x))
+            end
+        end
+    end
+    return WDPVG
 end

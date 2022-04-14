@@ -62,13 +62,18 @@ function dijkstrapath(g::Digraph{T,U}, source::U, dest::U) where {T, U}
     end
 end
  
-function doWork(g, path, x)
+function doWork(g, path, x, direction)
     group = x
     if !(x in path)
         shortestLen = typemax(Float32)
         #not always returing correct group because of directed graph. 
         #think we need to make graph undirected
         for y in eachindex(path)
+            if direction == "left" && path[y] > x
+                continue
+            elseif direction == "right" && path[y] < x
+                continue
+            end
             p, c = dijkstrapath(g, x, path[y])
             if c < shortestLen
                 shortestLen = c
@@ -79,13 +84,13 @@ function doWork(g, path, x)
     return group
 end
 
-function hubConstruction(g, path)
+function hubCon(g, path, direction)
     # puts each node not in path into group of closest node in path
     # returns list of sets
     groups = Vector{Int64}(undef,length(g.verts))
     dict = Dict{Int64, Set{Int64}}()
     @sync for x in g.verts
-        Threads.@spawn groups[x] = doWork(g, path, x)
+        Threads.@spawn groups[x] = doWork(g, path, x, direction)
     end
     for x in eachindex(groups)
         if haskey(dict, groups[x])
@@ -97,7 +102,7 @@ function hubConstruction(g, path)
     return dict
 end
 
-function hubMerging(g, path, groups, e)
+function hubMerg(g, path, groups, e)
     k = sort!(collect(keys(groups)))
     for i in 1:length(k)
        for j in i+1:length(k)

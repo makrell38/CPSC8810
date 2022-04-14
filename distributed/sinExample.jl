@@ -6,14 +6,14 @@ include("WDPVG.jl")
 include("parallelCD.jl")
 
 #set number of points
-numPoints = 300
+numPoints = 10
 # creates numPoints between values 0-1
 x = rand(Uniform(0,1),1,numPoints)
 #s holds output of each x value put into the sin function
 s = sin.(x)
 #call WDPVG which returns the WDPVG list of tuples of edges
 @time begin
-WDPVG = build_WDPVG(s, numPoints)
+WDPVG = build_WDPVG_dis(s, numPoints)
 end
 
 #println(WDPVG)
@@ -29,12 +29,12 @@ end
 #println("Shortest path from $source to $destination: ", isempty(path) ? "no possible path" : join(path, " → "), " (cost $cost)")
 
 @time begin
-groups = hubConstruction(graph, path)
+groups = hubConst(graph, path, "")
 end
 #println("groups before merge: ", groups)
 
 @time begin
-hubMerging(graph, path, groups, 10)
+hubMerge(graph, path, groups, 10)
 end
 #println("groups after merge: ", groups)
 

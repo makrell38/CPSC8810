@@ -33,11 +33,11 @@ end
 #println("Shortest path from $source to $destination: ", isempty(path) ? "no possible path" : join(path, " → "), " (cost $cost)")
 
 @time begin
-groups = hubConstruction(graph, path)
+groups = hubCon(graph, path, "")
 end
 #println("groups before merge: ", groups)
 
 @time begin
-hubMerging(graph, path, groups, 10)
+hubMerg(graph, path, groups, 10)
 end
 #println("groups after merge: ", groups)

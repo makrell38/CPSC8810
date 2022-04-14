@@ -62,7 +62,7 @@ function dijkstrapath(g::Digraph{T,U}, source::U, dest::U) where {T, U}
 end
  
 
-function hubConstruction(g, path)
+function hubConstruction(g, path, direction)
     # puts each node not in path into group of closest node in path
     # returns list of sets
     groups = Set{Int64}[]
@@ -72,11 +72,14 @@ function hubConstruction(g, path)
     end
     for x in g.verts
         group = x
-        if !(x in path)
+        if !(x in path) 
             shortestLen = typemax(Float32)
-            #not always returing correct group because of directed graph. 
-            #think we need to make graph undirected
             for y in eachindex(path)
+                if direction == "left" && path[y] > x
+                    continue
+                elseif direction == "right" && path[y] < x
+                    continue
+                end
                 p, c = dijkstrapath(g, x, path[y])
                 if c < shortestLen
                     shortestLen = c
@@ -96,36 +99,22 @@ end
 
 function hubMerging(g, path, groups, e)
     k = sort!(collect(keys(groups)))
-    for i in 1:length(k)
-       for j in i+1:length(k)
-           p,c = dijkstrapath(g, k[i], k[j])
+    while length(k) >= 2
+        first = k[1]
+        i = 2
+        while i <= length(k)
+           second = k[i]
+            p,c = dijkstrapath(g, first, second)
             if c < e
-                groups[k[i]] = union!(groups[k[i]], groups[k[j]])
-                delete!(groups, k[j])
+                groups[first] = union!(groups[first], groups[second])
+                delete!(groups, second)
+                deleteat!(k, i)
+            else
+                i += 1
             end
+            
         end
+        deleteat!(k, 1)
     end
 end
 
-#=
-function hubMerging(g, path, groups, e)
-    ret = copy(groups)
-    
-    p_copy = copy(path)
-    
-    while size(p_copy)[1] > 1
-        x = p_copy[1]
-        for y in 2:(size(p_copy)[1])
-            p, c = dijkstrapath(g, x, p_copy[y])
-            if c < e
-                ret[1] = union!(ret[1],ret[y])
-                deleteat!(ret, y)
-                deleteat!(p_copy, y)
-            end
-        end
-        deleteat!(p_copy, 1)
-        
-    end
-    return ret
-end
-=#
