@@ -1,12 +1,13 @@
 import Pkg
 using JuMP
 using Distributions
+using Distributed 
 
-include("WDPVG.jl")
-include("parallelCD.jl")
+@everywhere include("WDPVG.jl")
+@everywhere include("parallelCD.jl")
 
 #set number of points
-numPoints = 10
+numPoints = 50
 # creates numPoints between values 0-1
 x = rand(Uniform(0,1),1,numPoints)
 #s holds output of each x value put into the sin function
@@ -15,7 +16,7 @@ s = sin.(x)
 @time begin
 WDPVG = build_WDPVG_dis(s, numPoints)
 end
-
+println("HERE")
 #println(WDPVG)
 #create graph using method from communityDetection.jl
 graph = Digraph(WDPVG)

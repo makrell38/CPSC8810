@@ -3,11 +3,12 @@ using JuMP
 using Distributions
 using Distributed
 using SharedArrays
-addprocs(6)
 
 include("parallelCD.jl")
 
-@everywhere function NVG(A, B, s)
+addprocs(6)
+
+@everywhere function NVG_dis(A, B, s)
     #creates graph edge
     #s is an array representing the intensities for each input value
     #returns weight of graph edge
@@ -27,6 +28,7 @@ include("parallelCD.jl")
 end
 
 function build_WDPVG_dis(s, numPoints)
+    
     #returns WDPVG
     #s is an array representing the intensities for each input value
     #returns list of tuples of each edge
@@ -35,8 +37,8 @@ function build_WDPVG_dis(s, numPoints)
     WDPVG = Tuple{Int64, Int64, Float64}[]
     @sync @distributed for A=1:numPoints
         for B=1:numPoints
-            graph = convert(Float64, NVG(A, B, s))
-            graph_prime = convert(Float64, NVG(A, B, s_prime))
+            graph = convert(Float64, NVG_dis(A, B, s))
+            graph_prime = convert(Float64, NVG_dis(A, B, s_prime))
             x = maximum([graph,graph_prime])
             edges[A,B] = x
         end

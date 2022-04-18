@@ -4,7 +4,7 @@ using Distributions
 using Distributed 
 using SharedArrays
 
-addprocs(6)
+#addprocs(6)
 
 # Code adapted from https://rosettacode.org/wiki/Dijkstra%27s_algorithm
 @everywhere struct Digraph{T <: Real,U}
