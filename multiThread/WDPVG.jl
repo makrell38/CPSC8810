@@ -24,24 +24,31 @@ function NVG(A, B, s)
     return 0
 end
 
-function build_WDPVG(s, numPoints)
+function build_WDPVG_mul(s, numPoints)
     #returns WDPVG
     #s is an array representing the intensities for each input value
     #returns list of tuples of each edge
     s_prime = -s
     WDPVG = Tuple{Int64, Int64, Float64}[]
+    edges = Array{Float64}(undef, numPoints,numPoints)
        @sync for A=1:numPoints
-           for B=1:numPoints
-                   Threads.@spawn begin
+            Threads.@spawn begin
+               for B=1:numPoints
                       graph = convert(Float64, NVG(A, B, s))
                       graph_prime = convert(Float64, NVG(A, B, s_prime))
                       x = maximum([graph,graph_prime])
-                      if x != 0
-                      push!(WDPVG,(A,B,x))
-                     end
+                      edges[A,B] = x
                     end
                   end
                end
+    for A=1:numPoints
+        for B=1:numPoints
+            x = edges[A,B]
+            if x != 0
+                push!(WDPVG, (A,B,x))
+            end
+        end
+    end
  return WDPVG
 end
 
