@@ -26,7 +26,7 @@ include("parallelCD.jl")
     return 0
 end
 
-function build_WDPVG(s, numPoints)
+function build_WDPVG_dis(s, numPoints)
     #returns WDPVG
     #s is an array representing the intensities for each input value
     #returns list of tuples of each edge
