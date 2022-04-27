@@ -38,19 +38,3 @@ end
 hubMerge(graph, path, groups, 10)
 end
 #println("groups after merge: ", groups)
-
-#=
-#create groups
-#returns dictionary of type Dict(Int64, Set{Int64})
-@time begin
-groups = createGroups(s,path, graph)
-end
-#println("groups before merge: ", groups)
-
-#merges groups closer
-#changes groups
-@time begin
-hubMerging(graph, path, groups, 10)
-end
-#println("groups after merge: ", groups)
-=#

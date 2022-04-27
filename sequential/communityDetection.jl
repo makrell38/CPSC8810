@@ -22,7 +22,6 @@ neighbours(g::Digraph, v) = Set((b, c) for ((a, b), c) in edges(g) if a == v)
 function dijkstrapath(g::Digraph{T,U}, source::U, dest::U) where {T, U}
     @assert source ∈ vertices(g) "$source is not a vertex in the graph"
     
-    
     # Easy case
     if source == dest return [source], 0 end
     # Initialize variables
@@ -65,6 +64,9 @@ end
 function hubConstruction(g, path, direction)
     # puts each node not in path into group of closest node in path
     # returns list of sets
+    # direction sets the direction for grouping
+    # direction options are "left", "right", or ""
+    # left means nodes are group only with nodes that come before it
     groups = Set{Int64}[]
     dict = Dict{Int64, Set{Int64}}()
     for y in path
@@ -86,7 +88,6 @@ function hubConstruction(g, path, direction)
                     group = path[y]
                 end
             end
-        #push!(groups[group], x)
         end
         if haskey(dict, group)
             push!(dict[group], x)
@@ -98,6 +99,8 @@ function hubConstruction(g, path, direction)
 end
 
 function hubMerging(g, path, groups, e)
+    # merge groups that are closer than e distance apart
+    # merges to the left ie later group becomes part of eariler group
     k = sort!(collect(keys(groups)))
     while length(k) >= 2
         first = k[1]

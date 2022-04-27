@@ -4,7 +4,6 @@ using Distributions
 using Distributed 
 using SharedArrays
 
-#addprocs(6)
 
 # Code adapted from https://rosettacode.org/wiki/Dijkstra%27s_algorithm
 @everywhere struct Digraph{T <: Real,U}
@@ -69,8 +68,11 @@ end
 function hubConst(g, path, direction)
     # puts each node not in path into group of closest node in path
     # returns list of sets
+    #shared vector to store all groups
+    #prevents overwritting issues
     groups = SharedVector{Int64}(length(g.verts))
     dict = Dict{Int64, Set{Int64}}()
+    #run in parallel
     @sync @distributed for x in 1:length(g.verts)
         group = x
         if !(x in path)
@@ -91,6 +93,7 @@ function hubConst(g, path, direction)
         groups[x] = group
     end
     
+    #loop through each group and move to dictionary
     for x in eachindex(groups)
         if haskey(dict, groups[x])
             push!(dict[groups[x]], x)
@@ -104,6 +107,7 @@ end
 
 
 function hubMerge(g, path, groups, e)
+    #merge groups that are closer than e to each other
     k = sort!(collect(keys(groups)))
     for i in 1:length(k)
        for j in i+1:length(k)

@@ -12,13 +12,16 @@ include("../distributed/WDPVG.jl")
 include("../distributed/parallelCD.jl")
 
 Random.seed!(123)
-#set number of points
+
+#set number of points to test
 numPoints = [10,50,100, 250, 500, 1000, 2500]
 
+# keep track of runtimes for plotting
 timeList = []
 multiList = []
 distList = []
 numList = []
+
 for i in numPoints
     println(i)
     # creates numPoints between values 0-1
@@ -26,6 +29,7 @@ for i in numPoints
     #s holds output of each x value put into the sin function
     s = sin.(x)
 
+    #time sequential version
     count = @elapsed begin
         println("seq ", i)
         #call WDPVG which returns the WDPVG list of tuples of edges
@@ -48,6 +52,7 @@ for i in numPoints
     
     push!(timeList, count)
     
+    #time multithreading version
     count = @elapsed begin
         println("multi ", i)
         WDPVG = build_WDPVG_mul(s, i)
@@ -63,6 +68,7 @@ for i in numPoints
     end
     push!(multiList, count)
 
+    #time distributed version
     count = @elapsed begin
         println("dist ", i)
         WDPVG = build_WDPVG_dis(s, i)
@@ -81,11 +87,13 @@ for i in numPoints
     push!(numList, i)
     println(i, " done")
     
+    #plot times
     seq = layer(x=numList,y=timeList, Geom.line, Geom.point, color=[colorant"red"])
     mul = layer(x=numList,y=multiList, Geom.line, Geom.point, color=[colorant"blue"])
     dis = layer(x=numList,y=distList, Geom.line, Geom.point, color=[colorant"green"])
     p = plot(seq,mul,dis, Guide.XLabel("Data Size"), Guide.YLabel("Run Time(sec)"), Guide.Title("Run Time Comparisons"), Guide.manual_color_key("Legend", ["Sequential", "Multi-Threading","Distributed"], ["red", "blue", "green"]) )
 
+    #save the plot
     img = SVG("runtime.svg")
     draw(img, p)
 

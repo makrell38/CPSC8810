@@ -11,17 +11,20 @@ include("../multiThread/commDet.jl")
 include("../distributed/WDPVG.jl")
 include("../distributed/parallelCD.jl")
 
+#load the data
 data = loadData()
+#take values of the 4th column ie lead 1 ecg data
 numPoints = size(data[[4],:])[2]
 
 # Change number here to adjust how many datapoints there are
 numPoints = trunc(Int,numPoints/100)
 
+#print the number of points being used
 println(numPoints)
 data = data[[4],:]
 data = data[1:numPoints]
 
-
+# run and time sequential version
 seqTime = @elapsed begin
     WDPVG = build_WDPVG(data, numPoints)
 
@@ -38,6 +41,7 @@ end
 
 println("sequential done: ", seqTime)
 
+# run and time multithreading 
 multiTime = @elapsed begin
     WDPVG = build_WDPVG_mul(data, numPoints)
     graph = Digraph(WDPVG)
@@ -52,6 +56,7 @@ multiTime = @elapsed begin
 end
 println("multiThreading done: ", multiTime)
 
+# run and time distributed
 distTime = @elapsed begin
     WDPVG = build_WDPVG_dis(data, numPoints)
 
@@ -67,6 +72,7 @@ distTime = @elapsed begin
 end
 println("distributed done: ", distTime)
 
+#plot the times in a bar graph
 labelList = ["Sequential", "Multi-Threading", "Distributed"]
 timeList = [seqTime, multiTime, distTime]
 p = plot(x=labelList, y=timeList, Geom.bar, Guide.XLabel("Approach"), Guide.YLabel("Run Time(sec)"), color=labelList, Scale.color_discrete_manual("red", "blue", "green"))

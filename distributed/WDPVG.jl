@@ -6,7 +6,8 @@ using SharedArrays
 
 include("parallelCD.jl")
 
-addprocs(6)
+#change number of added processes here
+addprocs(5)
 
 @everywhere function NVG_dis(A, B, s)
     #creates graph edge
@@ -33,8 +34,10 @@ function build_WDPVG_dis(s, numPoints)
     #s is an array representing the intensities for each input value
     #returns list of tuples of each edge
     s_prime = -s
+    #push edges to shared array to prevent errors when ran in parallel
     edges = SharedArray{Float64}((numPoints,numPoints))
     WDPVG = Tuple{Int64, Int64, Float64}[]
+    #run in parallel
     @sync @distributed for A=1:numPoints
         for B=1:numPoints
             graph = convert(Float64, NVG_dis(A, B, s))

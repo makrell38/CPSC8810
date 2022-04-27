@@ -63,6 +63,9 @@ function dijkstrapath(g::Digraph{T,U}, source::U, dest::U) where {T, U}
 end
  
 function doWork(g, path, x, direction)
+    #function called by threads
+    # allows for group computation with all local variables
+    #returns the group of a node
     group = x
     if !(x in path)
         shortestLen = typemax(Float32)
@@ -89,9 +92,13 @@ function hubCon(g, path, direction)
     # returns list of sets
     groups = Vector{Int64}(undef,length(g.verts))
     dict = Dict{Int64, Set{Int64}}()
+    #ran in parallel
+    #each thread gets a node and calls doWork to compute the group for that node
+    
     @sync for x in g.verts
         Threads.@spawn groups[x] = doWork(g, path, x, direction)
     end
+    #assign each group to a dictionary that gets returned
     for x in eachindex(groups)
         if haskey(dict, groups[x])
             push!(dict[groups[x]], x)
@@ -103,6 +110,7 @@ function hubCon(g, path, direction)
 end
 
 function hubMerg(g, path, groups, e)
+    #merge groups that are closer than e distance from each other
     k = sort!(collect(keys(groups)))
     for i in 1:length(k)
        for j in i+1:length(k)
