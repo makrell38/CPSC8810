@@ -2,7 +2,7 @@ import Pkg
 include("communityDetection.jl")
 
 
-function calculateModularityDensity(g::Digraph{T,U}, groups)where {T, U}
+function calculateModularityDensity(graph::Digraph{T,U}, groups)where {T, U}
     groupID = collect(keys(groups))
     
     
